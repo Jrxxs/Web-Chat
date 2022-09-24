@@ -81,4 +81,102 @@
 	</div>
 </main>
 
+<script>
+	const roomName = 'testHub';
+
+    const HubSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/hub/'
+            + roomName
+            + '/'
+        );
+
+    HubSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        let message = data['message'];
+        let author = data['author'];
+        let date = data['date'];
+        if (author == companion) {
+			let msgListTag = document.createElement('div');
+			msgListTag.className = 'chat-message-left pb-4';
+			let div1 = document.createElement('div');
+			let ImgTag = document.createElement('img');
+			ImgTag.className = 'rounded-circle mr-1';
+			ImgTag.src = '{{ Companion.users.Photo.url }}';
+			ImgTag.alt = companion;
+			ImgTag.width = 40;
+			ImgTag.height = 40;
+			let div11 = document.createElement('div');
+			div11.className = 'text-muted small text-nowrap mt-2';
+			div11.innerHTML += date;
+			div1.appendChild(ImgTag);
+			div1.appendChild(div11);
+			let div2 = document.createElement('div');
+			div2.className = 'flex-shrink-1 bg-light rounded py-2 px-3 ml-3';
+			let div22 = document.createElement('div');
+			div22.className = 'font-weight-bold mb-1';
+			div22.innerHTML += companion;
+			div2.appendChild(div22);
+			div2.innerHTML += message;
+
+			msgListTag.appendChild(div1);
+			msgListTag.appendChild(div2);
+			document.querySelector('#chat-log').appendChild(msgListTag);
+        } else {
+        	let msgListTag = document.createElement('div');
+			msgListTag.className = 'chat-message-right pb-4';
+			let div1 = document.createElement('div');
+			let ImgTag = document.createElement('img');
+			ImgTag.src = '{{ Client.users.Photo.url }}';
+			ImgTag.className = 'rounded-circle mr-1';
+			ImgTag.alt = client;
+			ImgTag.width = 40;
+			ImgTag.height = 40;
+			let div11 = document.createElement('div');
+			div11.className = 'text-muted small text-nowrap mt-2';
+			div11.innerHTML += date;
+			div1.appendChild(ImgTag);
+			div1.appendChild(div11);
+			let div2 = document.createElement('div');
+			div2.className = 'flex-shrink-1 bg-light rounded py-2 px-3 mr-3';
+			let div22 = document.createElement('div');
+			div22.className = 'font-weight-bold mb-1';
+			div22.innerHTML += 'You';
+			div2.appendChild(div22);
+			div2.innerHTML += message;
+
+			msgListTag.appendChild(div1);
+			msgListTag.appendChild(div2);
+			document.querySelector('#chat-log').appendChild(msgListTag);
+        }
+    };
+
+    HubSocket.onclose = function(e) {
+    	console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#message-input').focus();
+    document.querySelector('#message-input').onkeyup = function(e) {
+    	if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#send-button').click();
+        }
+    };
+
+    document.querySelector('#send-button').onclick = function(e) {
+    	const messageInputDom = document.querySelector('#message-input');
+        const message = messageInputDom.value;
+        const date = new Date(Date.now()).toISOString().replace('T',' ').replace('Z','');
+        if (message != '') {
+			HubSocket.send(JSON.stringify({
+				'message': message,
+				'author': client,
+				'destination': companion,
+				'date': date
+			}));
+			messageInputDom.value = '';
+        }
+	};
+</script>
+
 {% endblock Content %}
