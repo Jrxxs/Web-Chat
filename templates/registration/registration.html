@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Registration{% endblock title %}
+
+{% block Content %}
+
+<main class="content">
+    <div class="container p-0">
+
+		<h1 class="h3 mb-3">Messages</h1>
+
+		<div class="card">
+			<div class="row g-0">
+				{% block Client %}
+				<div class="col-12 col-lg-5 col-xl-3 border-right">
+
+					<div class="px-4 d-none d-md-block">
+						<div class="d-flex align-items-center">
+							<div class="flex-grow-1">
+								<input type="text" class="form-control my-3" placeholder="Search...">
+							</div>
+						</div>
+					</div>
+
+						{% for U in UsErS %}
+							<a href="" class="list-group-item list-group-item-action border-0">
+								<div class="badge bg-success float-right">5</div>
+								<div class="d-flex align-items-start">
+									<img src="{{ U.users.Photo.url }}" class="rounded-circle mr-1" alt="{{ U.username }}" width="40" height="40">
+									<div class="flex-grow-1 ml-3">
+										{{ U.username }}
+										<div class="small"><span class="fas fa-circle chat-online"></span> Online</div>
+									</div>
+								</div>
+							</a>
+						{% endfor %}
+
+					<hr class="d-block d-lg-none mt-1 mb-0">
+				</div>
+				
+					<div class="col-12 col-lg-7 col-xl-9">
+						<div class="py-2 px-4 border-bottom d-none d-lg-block">
+							<div class="d-flex align-items-center py-1">
+								<div class="position-relative"></div>
+								<div class="flex-grow-1 pl-3"></div>
+								<div>
+									<a href="{% url 'login' %}">
+										<button class="btn btn-primary btn-lg mr-1 px-3">
+											Log In
+										</button>
+									</a>
+									<a href="{% url 'registration' %}">
+										<button class="btn btn-info btn-lg mr-1 px-3 d-none d-md-inline-block">
+											Sign Up
+										</button>
+									</a>
+									<button class="btn btn-light border btn-lg px-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-horizontal feather-lg"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button>
+								</div>
+							</div>
+						</div>
+
+						<form action="{% url 'registration' %}" method="post">
+							<div class="position-relative">
+								<div class="input-group">
+									{{ context.form }}
+									{% csrf_token %}
+									<button class="btn btn-primary" id="send-button">Send</button>
+								</div>
+							</div>
+						</form>
+					</div>
+
+				{% endblock Client %}
+
+			</div>
+		</div>
+	</div>
+</main>
+
+<script>
+        document.querySelector('#login-input').focus();
+        document.querySelector('#login-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#send-button').click();
+            }
+        };
+
+        document.querySelector('#send-button').onclick = function(e) {
+            var Id = document.querySelector('#login-input').value;
+            window.location.pathname = 'user_id=' + Id + '/';
+        };
+</script>
+
+{% endblock Content %}

@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat{% endblock title %}
+
+{% block Content %}
+
+<main class="content">
+    <div class="container p-0">
+
+		<h1 class="h3 mb-3">{{ user.username }} chat</h1>
+
+		<div class="card">
+			<div class="row g-0">
+				{% block Client %}
+				<div class="col-12 col-lg-5 col-xl-3 border-right">
+
+					<div class="px-4 d-none d-md-block">
+						<div class="d-flex align-items-center">
+							<div class="flex-grow-1">
+								<input type="text" class="form-control my-3" placeholder="Search...">
+							</div>
+						</div>
+					</div>
+
+						{% for U in UsErS %}
+							<a href="{% url 'user_messages' Client.id U.id %}" class="list-group-item list-group-item-action border-0">
+								<div class="badge bg-success float-right">5</div>
+								<div class="d-flex align-items-start">
+									<img src="{{ U.users.Photo.url }}" class="rounded-circle mr-1" alt="{{ U.username }}" width="40" height="40">
+									<div class="flex-grow-1 ml-3">
+										{% if Client.id != U.id %}
+											{{ U.username }}
+										{% else %}
+											To Self
+										{% endif %}
+										<div class="small"><span class="fas fa-circle chat-online"></span> Online</div>
+									</div>
+								</div>
+							</a>
+						{% endfor %}
+
+					<hr class="d-block d-lg-none mt-1 mb-0">
+				</div>
+
+				{% block Companion %}
+					<div class="col-12 col-lg-7 col-xl-9">
+						<div class="py-2 px-4 border-bottom d-none d-lg-block">
+							<div class="d-flex align-items-center py-1">
+								<div class="position-relative">
+									<img src="{{ Companion.users.Photo.url }}" class="rounded-circle mr-1" alt="{{ Companion.username }}" width="40" height="40">
+								</div>
+								<div class="flex-grow-1 pl-3">
+									<strong>{{ Companion.username }}</strong>
+									<div class="text-muted small"><em>Typing...</em></div>
+								</div>
+								<div>
+									<a href="{% url 'logout' %}">
+										<button class="btn btn-primary btn-lg mr-1 px-3">
+											Log Out
+										</button>
+									</a>
+									<button class="btn btn-light border btn-lg px-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-horizontal feather-lg"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button>
+								</div>
+							</div>
+						</div>
+
+						<div class="position-relative">
+							<div class="chat-messages p-4" id="chat-log">
+
+								{% for message in Log %}
+									{% if message.From_User_id == Client.id and message.To_User_id == Companion.id %}
+										<div class="chat-message-right pb-4">
+											<div>
+												<img src="{{ Client.users.Photo.url }}" class="rounded-circle mr-1" alt="{{ Client.username }}" width="40" height="40">
+												<div class="text-muted small text-nowrap mt-2">{{ message.Date_Time }}</div>
+											</div>
+											<div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
+												<div class="font-weight-bold mb-1">You</div>
+												{{ message.Message }}
+											</div>
+										</div>
+
+									{% elif message.From_User_id == Companion.id and message.To_User_id == Client.id %}
+										<div class="chat-message-left pb-4">
+											<div>
+												<img src="{{ Companion.users.Photo.url }}" class="rounded-circle mr-1" alt="{{ Companion.username }}" width="40" height="40">
+												<div class="text-muted small text-nowrap mt-2">{{ message.Date_Time }}</div>
+											</div>
+											<div class="flex-shrink-1 bg-light rounded py-2 px-3 ml-3">
+												<div class="font-weight-bold mb-1">{{ Companion.username }}</div>
+												{{ message.Message }}
+											</div>
+										</div>
+
+									{% endif %}
+
+								{% endfor %}
+
+							</div>
+						</div>
+						<div class="flex-grow-0 py-3 px-4 border-top">
+							<div class="input-group">
+								<input type="text" class="form-control" id="message-input" placeholder="Type your message" name="Message">
+								<button class="btn btn-primary" id="send-button">Send</button>
+							</div>
+						</div>
+					</div>
+
+			</div>
+		</div>
+	</div>
+</main>
+<script>
+	const companion = '{{ Companion.username }}';
+	const client = '{{ Client.username }}';
+	let roomName = '';
+
+	if (client < companion) {
+		roomName = client + '_and_' + companion;
+		console.log(roomName);
+	} else {
+		roomName = companion + '_and_' + client;
+		console.log(roomName);
+	};
+
+    const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/chat/'
+            + roomName
+            + '/'
+        );
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        let message = data['message'];
+        let author = data['author'];
+        let date = data['date'];
+        if (author == companion) {
+			let msgListTag = document.createElement('div');
+			msgListTag.className = 'chat-message-left pb-4';
+			let div1 = document.createElement('div');
+			let ImgTag = document.createElement('img');
+			ImgTag.className = 'rounded-circle mr-1';
+			ImgTag.src = '{{ Companion.users.Photo.url }}';
+			ImgTag.alt = companion;
+			ImgTag.width = 40;
+			ImgTag.height = 40;
+			let div11 = document.createElement('div');
+			div11.className = 'text-muted small text-nowrap mt-2';
+			div11.innerHTML += date;
+			div1.appendChild(ImgTag);
+			div1.appendChild(div11);
+			let div2 = document.createElement('div');
+			div2.className = 'flex-shrink-1 bg-light rounded py-2 px-3 ml-3';
+			let div22 = document.createElement('div');
+			div22.className = 'font-weight-bold mb-1';
+			div22.innerHTML += companion;
+			div2.appendChild(div22);
+			div2.innerHTML += message;
+
+			msgListTag.appendChild(div1);
+			msgListTag.appendChild(div2);
+			document.querySelector('#chat-log').appendChild(msgListTag);
+        } else {
+        	let msgListTag = document.createElement('div');
+			msgListTag.className = 'chat-message-right pb-4';
+			let div1 = document.createElement('div');
+			let ImgTag = document.createElement('img');
+			ImgTag.src = '{{ Client.users.Photo.url }}';
+			ImgTag.className = 'rounded-circle mr-1';
+			ImgTag.alt = client;
+			ImgTag.width = 40;
+			ImgTag.height = 40;
+			let div11 = document.createElement('div');
+			div11.className = 'text-muted small text-nowrap mt-2';
+			div11.innerHTML += date;
+			div1.appendChild(ImgTag);
+			div1.appendChild(div11);
+			let div2 = document.createElement('div');
+			div2.className = 'flex-shrink-1 bg-light rounded py-2 px-3 mr-3';
+			let div22 = document.createElement('div');
+			div22.className = 'font-weight-bold mb-1';
+			div22.innerHTML += 'You';
+			div2.appendChild(div22);
+			div2.innerHTML += message;
+
+			msgListTag.appendChild(div1);
+			msgListTag.appendChild(div2);
+			document.querySelector('#chat-log').appendChild(msgListTag);
+        }
+    };
+
+    chatSocket.onclose = function(e) {
+    	console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#message-input').focus();
+    document.querySelector('#message-input').onkeyup = function(e) {
+    	if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#send-button').click();
+        }
+    };
+
+    document.querySelector('#send-button').onclick = function(e) {
+    	const messageInputDom = document.querySelector('#message-input');
+        const message = messageInputDom.value;
+        const date = new Date(Date.now()).toISOString().replace('T',' ').replace('Z','');
+        if (message != '') {
+			chatSocket.send(JSON.stringify({
+				'message': message,
+				'author': client,
+				'destination': companion,
+				'date': date
+			}));
+			messageInputDom.value = '';
+        }
+	};
+</script>
+				{% endblock Companion %}
+				{% endblock Client %}
+
+{% endblock Content %}
