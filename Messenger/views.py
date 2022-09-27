@@ -1,11 +1,13 @@
+from unicodedata import name
 from django.shortcuts import render, redirect
 from django.views.generic.base import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import logout, login, authenticate
+from django.core.files.storage import FileSystemStorage
 
 from .models import Users, Private_Log, User
-from .forms import LoginUserForm
+from .forms import LoginUserForm, RegistrationForm
 
 class LoginPage(View):
     """ Страница авторизации """
@@ -38,7 +40,7 @@ class LoginPage(View):
             return render(request, self.temlate_name, {'UsErS': users, 'context': context})
 
 class RegistrationPage(View):
-    """ Страница авторизации """
+    """ Страница регистрации """
     temlate_name = 'registration/registration.html'
 
     def get(self, request):
@@ -46,21 +48,24 @@ class RegistrationPage(View):
             return redirect('user_id', request.user.id)
         users = User.objects.filter(is_staff=False)
         context = {
-            'form': UserCreationForm
+            'form': RegistrationForm
         }
         return render(request, self.temlate_name, {'UsErS': users, 'context': context})
     
     def post(self, request):
-        form = UserCreationForm(request.POST)
+        form = RegistrationForm(request.POST, request.FILES)
         users = User.objects.filter(is_staff=False)
 
         if form.is_valid():
             form.save()
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password1')
+            photo = form.cleaned_data.get('photo')
             user = authenticate(username=username, password=password)
             login(request, user)
             user_id = User.objects.get(username=username).id
+            u = Users(user=User.objects.get(username=username), Photo=photo)
+            u.save()
             return redirect('user_id', user_id)
         else:
             context = {
