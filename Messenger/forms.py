@@ -20,4 +20,4 @@ class RegistrationForm(UserCreationForm):
     username = forms.CharField(label='Login', widget=forms.TextInput(attrs={'class': 'form-input'}))
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput(attrs={'class': 'form-input'}))
     password2 = forms.CharField(label='Repeat password', widget=forms.PasswordInput(attrs={'class': 'form-input'}))
-    photo = forms.FileField(label="Photo")
+    photo = forms.FileField(label="Photo", required=False)

@@ -26,7 +26,7 @@
 							<a href="{% url 'user_messages' Client.id U.id %}" class="list-group-item list-group-item-action border-0">
 								<div class="badge bg-success float-right">5</div>
 								<div class="d-flex align-items-start">
-									<img src="{{ U.users.Photo.url }}" class="rounded-circle mr-1" alt="{{ U.username }}" width="40" height="40">
+									<img src="{{ U.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ U.username }}" width="40" height="40">
 									<div class="flex-grow-1 ml-3">
 										{% if Client.id != U.id %}
 											{{ U.username }}
@@ -47,7 +47,7 @@
 						<div class="py-2 px-4 border-bottom d-none d-lg-block">
 							<div class="d-flex align-items-center py-1">
 								<div class="position-relative">
-									<img src="{{ Companion.users.Photo.url }}" class="rounded-circle mr-1" alt="{{ Companion.username }}" width="40" height="40">
+									<img src="{{ Companion.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ Companion.username }}" width="40" height="40">
 								</div>
 								<div class="flex-grow-1 pl-3">
 									<strong>{{ Companion.username }}</strong>
@@ -71,7 +71,7 @@
 									{% if message.From_User_id == Client.id and message.To_User_id == Companion.id %}
 										<div class="chat-message-right pb-4">
 											<div>
-												<img src="{{ Client.users.Photo.url }}" class="rounded-circle mr-1" alt="{{ Client.username }}" width="40" height="40">
+												<img src="{{ Client.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ Client.username }}" width="40" height="40">
 												<div class="text-muted small text-nowrap mt-2">{{ message.Date_Time }}</div>
 											</div>
 											<div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
@@ -83,7 +83,7 @@
 									{% elif message.From_User_id == Companion.id and message.To_User_id == Client.id %}
 										<div class="chat-message-left pb-4">
 											<div>
-												<img src="{{ Companion.users.Photo.url }}" class="rounded-circle mr-1" alt="{{ Companion.username }}" width="40" height="40">
+												<img src="{{ Companion.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ Companion.username }}" width="40" height="40">
 												<div class="text-muted small text-nowrap mt-2">{{ message.Date_Time }}</div>
 											</div>
 											<div class="flex-shrink-1 bg-light rounded py-2 px-3 ml-3">
@@ -142,7 +142,7 @@
 			let div1 = document.createElement('div');
 			let ImgTag = document.createElement('img');
 			ImgTag.className = 'rounded-circle mr-1';
-			ImgTag.src = '{{ Companion.users.Photo.url }}';
+			ImgTag.src = '{{ Companion.users.get_photo_url }}';
 			ImgTag.alt = companion;
 			ImgTag.width = 40;
 			ImgTag.height = 40;
@@ -167,7 +167,7 @@
 			msgListTag.className = 'chat-message-right pb-4';
 			let div1 = document.createElement('div');
 			let ImgTag = document.createElement('img');
-			ImgTag.src = '{{ Client.users.Photo.url }}';
+			ImgTag.src = '{{ Client.users.get_photo_url }}';
 			ImgTag.className = 'rounded-circle mr-1';
 			ImgTag.alt = client;
 			ImgTag.width = 40;

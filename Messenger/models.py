@@ -1,13 +1,20 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 
 class Users(models.Model):
     """ Пользователи """
     user = models.OneToOneField(User, verbose_name="user", on_delete=models.CASCADE)
-    Photo = models.ImageField("Photo", upload_to="photos/")
+    Photo = models.ImageField("Photo", upload_to="photos/", blank=True)
 
     def __str__(self):
         return self.user.username
+
+    def get_photo_url(self):
+        if self.Photo:
+            return self.Photo.url
+        else:
+            return settings.MEDIA_URL + 'photos/default.png'
 
     class Meta:
         verbose_name = "User"
