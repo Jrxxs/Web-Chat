@@ -23,7 +23,7 @@
 					</div>
 
 						{% for U in UsErS %}
-							<a href="{% url 'user_messages' Client.id U.id %}" class="list-group-item list-group-item-action border-0">
+							<a href="{% url 'user_messages' Client.id U.id %}"  id="{{ U.username }}" class="list-group-item list-group-item-action border-0">
 								<div class="badge bg-success float-right">5</div>
 								<div class="d-flex align-items-start">
 									<img src="{{ U.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ U.username }}" width="40" height="40">
@@ -33,7 +33,7 @@
 										{% else %}
 											To Self
 										{% endif %}
-										<div class="small"><span class="fas fa-circle chat-online"></span> Online</div>
+										<div class="small"><span class="fas fa-circle chat-online"></span>Offline</div>
 									</div>
 								</div>
 							</a>
@@ -82,86 +82,61 @@
 </main>
 
 <script>
-	const roomName = 'testHub';
+	const HubName = 'testHub';
+	const AuthorizedUser = '{{ user.username }}';
 
     const HubSocket = new WebSocket(
             'ws://'
             + window.location.host
             + '/ws/hub/'
-            + roomName
+            + HubName
             + '/'
         );
 
-    HubSocket.onmessage = function(e) {
+	HubSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
         let message = data['message'];
-        let author = data['author'];
-        let date = data['date'];
-        if (author == companion) {
-			let msgListTag = document.createElement('div');
-			msgListTag.className = 'chat-message-left pb-4';
-			let div1 = document.createElement('div');
-			let ImgTag = document.createElement('img');
-			ImgTag.className = 'rounded-circle mr-1';
-			ImgTag.src = '{{ Companion.users.get_photo_url }}';
-			ImgTag.alt = companion;
-			ImgTag.width = 40;
-			ImgTag.height = 40;
-			let div11 = document.createElement('div');
-			div11.className = 'text-muted small text-nowrap mt-2';
-			div11.innerHTML += date;
-			div1.appendChild(ImgTag);
-			div1.appendChild(div11);
-			let div2 = document.createElement('div');
-			div2.className = 'flex-shrink-1 bg-light rounded py-2 px-3 ml-3';
-			let div22 = document.createElement('div');
-			div22.className = 'font-weight-bold mb-1';
-			div22.innerHTML += companion;
-			div2.appendChild(div22);
-			div2.innerHTML += message;
-
-			msgListTag.appendChild(div1);
-			msgListTag.appendChild(div2);
-			document.querySelector('#chat-log').appendChild(msgListTag);
-        } else {
-        	let msgListTag = document.createElement('div');
-			msgListTag.className = 'chat-message-right pb-4';
-			let div1 = document.createElement('div');
-			let ImgTag = document.createElement('img');
-			ImgTag.src = '{{ Client.users.get_photo_url }}';
-			ImgTag.className = 'rounded-circle mr-1';
-			ImgTag.alt = client;
-			ImgTag.width = 40;
-			ImgTag.height = 40;
-			let div11 = document.createElement('div');
-			div11.className = 'text-muted small text-nowrap mt-2';
-			div11.innerHTML += date;
-			div1.appendChild(ImgTag);
-			div1.appendChild(div11);
-			let div2 = document.createElement('div');
-			div2.className = 'flex-shrink-1 bg-light rounded py-2 px-3 mr-3';
-			let div22 = document.createElement('div');
-			div22.className = 'font-weight-bold mb-1';
-			div22.innerHTML += 'You';
-			div2.appendChild(div22);
-			div2.innerHTML += message;
-
-			msgListTag.appendChild(div1);
-			msgListTag.appendChild(div2);
-			document.querySelector('#chat-log').appendChild(msgListTag);
-        }
+		if (message == 'init_connected_users_list') {
+			let connected_users = data['connected_users'];
+			init_online_users(connected_users);
+		} else if (message == 'new_connectoin') {
+			let author = data['author'];
+			client_connected(author);
+		} else if (message == 'disconnection') {
+			let author = data['author'];
+			client_disconnected(author);
+		}
     };
+
+	function init_online_users(connected_users) {
+		for (let i = 0; i < connected_users.length; i++) {
+			user = document.querySelector('#' + connected_users[i]);
+			user.children[1].children[1].children[0].textContent = 'Online';
+		}
+	};
+
+	function client_connected(client) {
+		if (client != AuthorizedUser) {
+			user = document.querySelector('#' + client);
+			user.children[1].children[1].children[0].textContent = 'Online';
+		}
+	};
+
+	function client_disconnected(client) {
+		user = document.querySelector('#' + client);
+		user.children[1].children[1].children[0].textContent = 'Offline';
+	};
 
     HubSocket.onclose = function(e) {
     	console.error('Chat socket closed unexpectedly');
     };
 
-    document.querySelector('#message-input').focus();
+    {% comment %} document.querySelector('#message-input').focus();
     document.querySelector('#message-input').onkeyup = function(e) {
     	if (e.keyCode === 13) {  // enter, return
             document.querySelector('#send-button').click();
         }
-    };
+    }; {% endcomment %}
 
     document.querySelector('#send-button').onclick = function(e) {
     	const messageInputDom = document.querySelector('#message-input');

@@ -4,6 +4,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 from .models import User, Private_Log
 
+connected_users = []
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -78,10 +80,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 
 class Hub(AsyncWebsocketConsumer):
+
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
-        # print(self.scope)
         self.room_group_name = 'hub_%s' % self.room_name
+
+        connected_users.append(str(self.scope['user']))
 
         # Join room group
         await self.channel_layer.group_add(
@@ -91,16 +95,58 @@ class Hub(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        # await self.send(text_data=json.dumps({
-        #     'message': message
-        # }))
+        await self.send(text_data=json.dumps({
+            'message': 'init_connected_users_list',
+            'connected_users': connected_users,
+        }))
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'client_connected',
+                'message': 'new_connectoin',
+                'author': str(self.scope['user']),
+            }
+        )
+
+    async def client_connected(self, event):
+        message = event['message']
+        client = event['author']
+        # print(f"New connection")
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message,
+            'author': client,
+        }))
 
     async def disconnect(self, close_code):
         # Leave room group
+        connected_users.remove(str(self.scope['user']))
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'client_disconnected',
+                'message': 'disconnection',
+                'author': str(self.scope['user']),
+            }
+        )
+
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
+    
+    async def client_disconnected(self, event):
+        message = event['message']
+        client = event['author']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message,
+            'author': client,
+        }))
 
     # Receive message from WebSocket
     async def receive(self, text_data):
