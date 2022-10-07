@@ -24,7 +24,7 @@
 
 						{% for U in UsErS %}
 							<a href="{% url 'user_messages' Client.id U.id %}"  id="{{ U.username }}" class="list-group-item list-group-item-action border-0">
-								<div class="badge bg-success float-right">5</div>
+								<div class="badge bg-success float-right"></div>
 								<div class="d-flex align-items-start">
 									<img src="{{ U.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ U.username }}" width="40" height="40">
 									<div class="flex-grow-1 ml-3">
@@ -97,14 +97,13 @@
         const data = JSON.parse(e.data);
         let message = data['message'];
 		if (message == 'init_connected_users_list') {
-			let connected_users = data['connected_users'];
-			init_online_users(connected_users);
+			init_online_users(data['connected_users']);
 		} else if (message == 'new_connectoin') {
-			let author = data['author'];
-			client_connected(author);
+			client_connected(data['author']);
 		} else if (message == 'disconnection') {
-			let author = data['author'];
-			client_disconnected(author);
+			client_disconnected(data['author']);
+		} else if (message == 'new_message') {
+			appeared_new_message(data['author']);
 		}
     };
 
@@ -127,31 +126,21 @@
 		user.children[1].children[1].children[0].textContent = 'Offline';
 	};
 
+	function appeared_new_message(author) {
+		user = document.querySelector('#' + author);
+		value = user.children[0].textContent;
+		if (value == '') {
+			user.children[0].textContent = '1';
+		} else {
+			value = Number(value) + 1;
+			user.children[0].textContent = `${value}`;
+		}
+	};
+
     HubSocket.onclose = function(e) {
-    	console.error('Chat socket closed unexpectedly');
+    	console.error('Hub socket closed unexpectedly');
     };
 
-    {% comment %} document.querySelector('#message-input').focus();
-    document.querySelector('#message-input').onkeyup = function(e) {
-    	if (e.keyCode === 13) {  // enter, return
-            document.querySelector('#send-button').click();
-        }
-    }; {% endcomment %}
-
-    document.querySelector('#send-button').onclick = function(e) {
-    	const messageInputDom = document.querySelector('#message-input');
-        const message = messageInputDom.value;
-        const date = new Date(Date.now()).toISOString().replace('T',' ').replace('Z','');
-        if (message != '') {
-			HubSocket.send(JSON.stringify({
-				'message': message,
-				'author': client,
-				'destination': companion,
-				'date': date
-			}));
-			messageInputDom.value = '';
-        }
-	};
 </script>
 
 {% endblock Content %}

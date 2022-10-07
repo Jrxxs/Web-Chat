@@ -34,11 +34,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        client = text_data_json['author']
-        companion = text_data_json['destination']
-        date = text_data_json['date']
+        data = json.loads(text_data)
+        message = data['message']
+        client = data['author']
+        companion = data['destination']
+        date = data['date']
 
         Client = await self.get_user(username=client)
         Companion = await self.get_user(username=companion)
@@ -148,42 +148,47 @@ class Hub(AsyncWebsocketConsumer):
             'author': client,
         }))
 
-    # Receive message from WebSocket
-    async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        client = text_data_json['author']
-        companion = text_data_json['destination']
-        date = text_data_json['date']
-
-        Client = await self.get_user(username=client)
-        Companion = await self.get_user(username=companion)
-
-        await self.save_message(sender=Client, reciever=Companion, data=message, time=date)
+    async def appearance_of_a_new_message(self, data):
+        client = data['author']
+        companion = data['destination']
 
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
             {
-                'type': 'chat_message',
-                'message': message,
+                'type': 'user_new_message_notification',
                 'author': client,
-                'date': date
+                'destination': companion,
+                'message': 'new_message'
             }
         )
 
-    # Receive message from room group
-    async def chat_message(self, event):
-        message = event['message']
-        client = event['author']
-        date = event['date']
+    async def read_message(self, data):
+        print("readed")
 
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps({
-            'message': message,
-            'author': client,
-            'date': date
-        }))
+    commands = {
+        'send_new_message': appearance_of_a_new_message,
+        'read_message': read_message
+    }
+
+    # Receive message from WebSocket
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+
+        await self.commands[data['command']](self, data)
+
+    # Receive message from room group
+    async def user_new_message_notification(self, event):
+        client = event['author']
+        companion = event['destination']
+        message = event['message']
+
+        if companion == str(self.scope['user']):
+            # Send message to WebSocket
+            await self.send(text_data=json.dumps({
+                'author': client,
+                'message': message
+            }))
 
     @sync_to_async
     def get_user(self, username):

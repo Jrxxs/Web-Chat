@@ -23,8 +23,8 @@
 					</div>
 
 						{% for U in UsErS %}
-							<a href="{% url 'user_messages' Client.id U.id %}" class="list-group-item list-group-item-action border-0">
-								<div class="badge bg-success float-right">5</div>
+							<a href="{% url 'user_messages' Client.id U.id %}" id="{{ U.username }}" class="list-group-item list-group-item-action border-0">
+								<div class="badge bg-success float-right"></div>
 								<div class="d-flex align-items-start">
 									<img src="{{ U.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ U.username }}" width="40" height="40">
 									<div class="flex-grow-1 ml-3">
@@ -33,7 +33,7 @@
 										{% else %}
 											To Self
 										{% endif %}
-										<div class="small"><span class="fas fa-circle chat-online"></span> Online</div>
+										<div class="small"><span class="fas fa-circle chat-online"></span>Offline</div>
 									</div>
 								</div>
 							</a>
@@ -113,14 +113,14 @@
 <script>
 	const companion = '{{ Companion.username }}';
 	const client = '{{ Client.username }}';
+	const HubName = 'testHub';
 	let roomName = '';
+
 
 	if (client < companion) {
 		roomName = client + '_and_' + companion;
-		console.log(roomName);
 	} else {
 		roomName = companion + '_and_' + client;
-		console.log(roomName);
 	};
 
     const chatSocket = new WebSocket(
@@ -128,6 +128,14 @@
             + window.location.host
             + '/ws/chat/'
             + roomName
+            + '/'
+        );
+
+    const HubSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/hub/'
+            + HubName
             + '/'
         );
 
@@ -191,8 +199,56 @@
         }
     };
 
+    HubSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        let message = data['message'];
+		if (message == 'init_connected_users_list') {
+			init_online_users(data['connected_users']);
+		} else if (message == 'new_connectoin') {
+			client_connected(data['author']);
+		} else if (message == 'disconnection') {
+			client_disconnected(data['author']);
+		} else if (message == 'new_message') {
+			appeared_new_message(data['author']);
+		}
+    };
+
+	function init_online_users(connected_users) {
+		for (let i = 0; i < connected_users.length; i++) {
+			user = document.querySelector('#' + connected_users[i]);
+			user.children[1].children[1].children[0].textContent = 'Online';
+		}
+	};
+
+	function client_connected(user) {
+		if (client != user) {
+			user = document.querySelector('#' + user);
+			user.children[1].children[1].children[0].textContent = 'Online';
+		}
+	};
+
+	function client_disconnected(client) {
+		user = document.querySelector('#' + client);
+		user.children[1].children[1].children[0].textContent = 'Offline';
+	};
+
+	function appeared_new_message(author) {
+		user = document.querySelector('#' + author);
+		value = user.children[0].textContent;
+		if (value == '') {
+			user.children[0].textContent = '1';
+		} else {
+			value = Number(value) + 1;
+			user.children[0].textContent = `${value}`;
+		}
+	};
+
     chatSocket.onclose = function(e) {
     	console.error('Chat socket closed unexpectedly');
+    };
+
+    HubSocket.onclose = function(e) {
+    	console.error('Hub socket closed unexpectedly');
     };
 
     document.querySelector('#message-input').focus();
@@ -213,105 +269,17 @@
 				'destination': companion,
 				'date': date
 			}));
-			messageInputDom.value = '';
-        }
-	};
 
-	roomName = 'testHub';
-
-    const HubSocket = new WebSocket(
-            'ws://'
-            + window.location.host
-            + '/ws/hub/'
-            + roomName
-            + '/'
-        );
-
-    HubSocket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        let message = data['message'];
-        let author = data['author'];
-        let date = data['date'];
-        if (author == companion) {
-			let msgListTag = document.createElement('div');
-			msgListTag.className = 'chat-message-left pb-4';
-			let div1 = document.createElement('div');
-			let ImgTag = document.createElement('img');
-			ImgTag.className = 'rounded-circle mr-1';
-			ImgTag.src = '{{ Companion.users.get_photo_url }}';
-			ImgTag.alt = companion;
-			ImgTag.width = 40;
-			ImgTag.height = 40;
-			let div11 = document.createElement('div');
-			div11.className = 'text-muted small text-nowrap mt-2';
-			div11.innerHTML += date;
-			div1.appendChild(ImgTag);
-			div1.appendChild(div11);
-			let div2 = document.createElement('div');
-			div2.className = 'flex-shrink-1 bg-light rounded py-2 px-3 ml-3';
-			let div22 = document.createElement('div');
-			div22.className = 'font-weight-bold mb-1';
-			div22.innerHTML += companion;
-			div2.appendChild(div22);
-			div2.innerHTML += message;
-
-			msgListTag.appendChild(div1);
-			msgListTag.appendChild(div2);
-			document.querySelector('#chat-log').appendChild(msgListTag);
-        } else {
-        	let msgListTag = document.createElement('div');
-			msgListTag.className = 'chat-message-right pb-4';
-			let div1 = document.createElement('div');
-			let ImgTag = document.createElement('img');
-			ImgTag.src = '{{ Client.users.get_photo_url }}';
-			ImgTag.className = 'rounded-circle mr-1';
-			ImgTag.alt = client;
-			ImgTag.width = 40;
-			ImgTag.height = 40;
-			let div11 = document.createElement('div');
-			div11.className = 'text-muted small text-nowrap mt-2';
-			div11.innerHTML += date;
-			div1.appendChild(ImgTag);
-			div1.appendChild(div11);
-			let div2 = document.createElement('div');
-			div2.className = 'flex-shrink-1 bg-light rounded py-2 px-3 mr-3';
-			let div22 = document.createElement('div');
-			div22.className = 'font-weight-bold mb-1';
-			div22.innerHTML += 'You';
-			div2.appendChild(div22);
-			div2.innerHTML += message;
-
-			msgListTag.appendChild(div1);
-			msgListTag.appendChild(div2);
-			document.querySelector('#chat-log').appendChild(msgListTag);
-        }
-    };
-
-    HubSocket.onclose = function(e) {
-    	console.error('Chat socket closed unexpectedly');
-    };
-
-    document.querySelector('#message-input').focus();
-    document.querySelector('#message-input').onkeyup = function(e) {
-    	if (e.keyCode === 13) {  // enter, return
-            document.querySelector('#send-button').click();
-        }
-    };
-
-    document.querySelector('#send-button').onclick = function(e) {
-    	const messageInputDom = document.querySelector('#message-input');
-        const message = messageInputDom.value;
-        const date = new Date(Date.now()).toISOString().replace('T',' ').replace('Z','');
-        if (message != '') {
 			HubSocket.send(JSON.stringify({
-				'message': message,
+				'command': 'send_new_message',
 				'author': client,
 				'destination': companion,
-				'date': date
 			}));
+
 			messageInputDom.value = '';
         }
 	};
+
 </script>
 				{% endblock Companion %}
 				{% endblock Client %}
