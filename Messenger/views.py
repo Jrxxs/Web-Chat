@@ -1,10 +1,7 @@
-from unicodedata import name
 from django.shortcuts import render, redirect
 from django.views.generic.base import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import logout, login, authenticate
-from django.core.files.storage import FileSystemStorage
 
 from .models import Users, Private_Log, User
 from .forms import LoginUserForm, RegistrationForm
@@ -78,8 +75,9 @@ class HomePage(LoginRequiredMixin ,View):
     def get(self, request, pk):
         if request.user.id == pk:
             Logged_Client = User.objects.get(id=pk)
-            users = User.objects.filter(is_staff=False)
-            return render(request, "Messenger/home_page.html", {"Client": Logged_Client, 'UsErS': users})
+            # users = User.objects.filter(is_staff=False)
+            Users = Logged_Client.users.Friends.all()
+            return render(request, "Messenger/home_page.html", {"Client": Logged_Client, 'UsErS': Users})
 
 class UserMessages(LoginRequiredMixin, View):
     """ Сообщения пользователя """
@@ -88,7 +86,7 @@ class UserMessages(LoginRequiredMixin, View):
             Logged_Client = User.objects.get(id=client_pk)
             companion = User.objects.get(id=companion_pk)
             Log = Private_Log.objects.filter(From_User__in=[Logged_Client, companion], To_User__in=[Logged_Client, companion])
-            Users = User.objects.filter(is_staff=False)
+            Users = Logged_Client.users.Friends.all()
             return render(request, "Messenger/user_messages.html", {"Client": Logged_Client, "Companion": companion, 'UsErS': Users, "Log": Log})
     
 def LogoutUser(reqest):

@@ -22,22 +22,9 @@
 						</div>
 					</div>
 
-						{% for U in UsErS %}
-							<a href="{% url 'user_messages' Client.id U.id %}" id="{{ U.username }}" class="list-group-item list-group-item-action border-0">
-								<div class="badge bg-success float-right"></div>
-								<div class="d-flex align-items-start">
-									<img src="{{ U.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ U.username }}" width="40" height="40">
-									<div class="flex-grow-1 ml-3">
-										{% if Client.id != U.id %}
-											{{ U.username }}
-										{% else %}
-											To Self
-										{% endif %}
-										<div class="small"><span class="fas fa-circle chat-online"></span>Offline</div>
-									</div>
-								</div>
-							</a>
-						{% endfor %}
+					<div id="friendlist">
+						{% include "includes/sidebar.html" %}
+					</div>
 
 					<hr class="d-block d-lg-none mt-1 mb-0">
 				</div>
@@ -98,12 +85,14 @@
 
 							</div>
 						</div>
+
 						<div class="flex-grow-0 py-3 px-4 border-top">
 							<div class="input-group">
 								<input type="text" class="form-control" id="message-input" placeholder="Type your message" name="Message">
 								<button class="btn btn-primary" id="send-button">Send</button>
 							</div>
 						</div>
+						
 					</div>
 
 			</div>
@@ -216,30 +205,38 @@
 	function init_online_users(connected_users) {
 		for (let i = 0; i < connected_users.length; i++) {
 			user = document.querySelector('#' + connected_users[i]);
-			user.children[1].children[1].children[0].textContent = 'Online';
+			if (user) {
+				user.children[1].children[1].children[0].textContent = 'Online';
+			}
 		}
 	};
 
-	function client_connected(user) {
-		if (client != user) {
-			user = document.querySelector('#' + user);
-			user.children[1].children[1].children[0].textContent = 'Online';
+	function client_connected(conn_client) {
+		if (conn_client != client) {
+			user = document.querySelector('#' + conn_client);
+			if (user) {
+				user.children[1].children[1].children[0].textContent = 'Online';
+			}
 		}
 	};
 
 	function client_disconnected(client) {
 		user = document.querySelector('#' + client);
-		user.children[1].children[1].children[0].textContent = 'Offline';
+		if (user) {
+			user.children[1].children[1].children[0].textContent = 'Offline';
+		}
 	};
 
 	function appeared_new_message(author) {
 		user = document.querySelector('#' + author);
-		value = user.children[0].textContent;
-		if (value == '') {
-			user.children[0].textContent = '1';
-		} else {
-			value = Number(value) + 1;
-			user.children[0].textContent = `${value}`;
+		if (user) {
+			value = user.children[0].textContent;
+			if (value == '') {
+				user.children[0].textContent = '1';
+			} else {
+				value = Number(value) + 1;
+				user.children[0].textContent = `${value}`;
+			}
 		}
 	};
 

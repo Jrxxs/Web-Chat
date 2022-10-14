@@ -1,3 +1,5 @@
+from statistics import mode
+from tabnanny import verbose
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
@@ -6,6 +8,7 @@ class Users(models.Model):
     """ Пользователи """
     user = models.OneToOneField(User, verbose_name="user", on_delete=models.CASCADE)
     Photo = models.ImageField("Photo", upload_to="photos/", blank=True)
+    Friends = models.ManyToManyField("self", verbose_name="friends", blank=True)
 
     def __str__(self):
         return self.user.username

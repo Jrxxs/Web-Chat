@@ -1,3 +1,4 @@
+from collections import UserList
 import json
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -166,9 +167,38 @@ class Hub(AsyncWebsocketConsumer):
     async def read_message(self, data):
         print("readed")
 
+    async def find_persons(self, data):
+
+        users = await self.get_user(data['query'])
+
+        if users != 0:
+
+            await self.send(text_data=json.dumps({
+                    'message': 'finded',
+                    'users': users
+                }))
+        
+        else:
+            
+            users = 'no_users'
+            await self.send(text_data=json.dumps({
+                    'message': 'finded',
+                    'users': users
+                }))
+
+    async def refresh_conn_users(self, data):
+
+        await self.send(text_data=json.dumps({
+            'message': 'init_connected_users_list',
+            'connected_users': connected_users,
+        }))
+
+
     commands = {
         'send_new_message': appearance_of_a_new_message,
-        'read_message': read_message
+        'read_message': read_message,
+        'find_persons': find_persons,
+        'refresh_conn_users' : refresh_conn_users
     }
 
     # Receive message from WebSocket
@@ -192,8 +222,9 @@ class Hub(AsyncWebsocketConsumer):
 
     @sync_to_async
     def get_user(self, username):
-        return User.objects.get(username=username)
-
-    @sync_to_async
-    def save_message(self, sender, reciever, data, time):
-        Private_Log.objects.create(From_User=sender, To_User=reciever, Message=data, Date_Time=time)
+        UserList = User.objects.filter(username__contains=username).values()
+        if UserList:
+            return json.dumps([{'username': u['username'], 'Photo': User.objects.get(id=u['id']).users.get_photo_url(), \
+                'Status': 'Online' if u['username'] in connected_users else 'Offline'} for u in UserList])
+        else:
+            return 0
