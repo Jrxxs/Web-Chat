@@ -1,4 +1,3 @@
-from collections import UserList
 import json
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -37,14 +36,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         message = data['message']
-        client = data['author']
-        companion = data['destination']
+        client = data['sender']
+        companion = data['receiver']
         date = data['date']
 
         Client = await self.get_user(username=client)
         Companion = await self.get_user(username=companion)
 
-        await self.save_message(sender=Client, reciever=Companion, data=message, time=date)
+        Message_Id = await self.save_message(sender=Client, reciever=Companion, data=message, time=date)
 
         # Send message to room group
         await self.channel_layer.group_send(
@@ -52,22 +51,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'chat_message',
                 'message': message,
-                'author': client,
-                'date': date
+                'sender': client,
+                'date': date,
+                'Message_Id': Message_Id
             }
         )
 
     # Receive message from room group
     async def chat_message(self, event):
         message = event['message']
-        client = event['author']
+        client = event['sender']
         date = event['date']
+        Message_Id = event['Message_Id']
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message,
-            'author': client,
-            'date': date
+            'sender': client,
+            'date': date,
+            'Message_Id': Message_Id
         }))
 
     @sync_to_async
@@ -76,8 +78,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
     def save_message(self, sender, reciever, data, time):
-        Private_Log.objects.create(From_User=sender, To_User=reciever, Message=data, Date_Time=time)
-
+       obj = Private_Log.objects.create(From_User=sender, To_User=reciever, Message=data, Date_Time=time)
+       return obj.id
 
 
 class Hub(AsyncWebsocketConsumer):
@@ -106,19 +108,19 @@ class Hub(AsyncWebsocketConsumer):
             {
                 'type': 'client_connected',
                 'message': 'new_connectoin',
-                'author': str(self.scope['user']),
+                'sender': str(self.scope['user']),
             }
         )
 
     async def client_connected(self, event):
         message = event['message']
-        client = event['author']
+        client = event['sender']
         # print(f"New connection")
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message,
-            'author': client,
+            'sender': client,
         }))
 
     async def disconnect(self, close_code):
@@ -130,7 +132,7 @@ class Hub(AsyncWebsocketConsumer):
             {
                 'type': 'client_disconnected',
                 'message': 'disconnection',
-                'author': str(self.scope['user']),
+                'sender': str(self.scope['user']),
             }
         )
 
@@ -141,31 +143,42 @@ class Hub(AsyncWebsocketConsumer):
     
     async def client_disconnected(self, event):
         message = event['message']
-        client = event['author']
+        client = event['sender']
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message,
-            'author': client,
+            'sender': client,
         }))
 
     async def appearance_of_a_new_message(self, data):
-        client = data['author']
-        companion = data['destination']
+        client = data['sender']
+        companion = data['receiver']
 
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'user_new_message_notification',
-                'author': client,
-                'destination': companion,
-                'message': 'new_message'
+                'message': 'new_message',
+                'sender': client,
+                'receiver': companion
             }
         )
 
     async def read_message(self, data):
-        print("readed")
+        Id = data['id']
+
+        if (await self.set_readed_status(int(Id))):
+            await self.send(text_data=json.dumps({
+                    'message': 'reading_error'
+                }))
+        else:
+            await self.send(text_data=json.dumps({
+                    'message': 'reading_successful',
+                    'sender': data['sender'],
+                    'id': Id
+                }))
 
     async def find_persons(self, data):
 
@@ -209,15 +222,16 @@ class Hub(AsyncWebsocketConsumer):
 
     # Receive message from room group
     async def user_new_message_notification(self, event):
-        client = event['author']
-        companion = event['destination']
+        client = event['sender']
+        companion = event['receiver']
         message = event['message']
 
         if companion == str(self.scope['user']):
             # Send message to WebSocket
             await self.send(text_data=json.dumps({
-                'author': client,
-                'message': message
+                'sender': client,
+                'message': message,
+                # 'id': ,
             }))
 
     @sync_to_async
@@ -228,3 +242,11 @@ class Hub(AsyncWebsocketConsumer):
                 'Status': 'Online' if u['username'] in connected_users else 'Offline'} for u in UserList])
         else:
             return 0
+    
+    @sync_to_async
+    def set_readed_status(self, id):
+        try:
+            Private_Log.objects.filter(id=id).update(Status=True)
+        except:
+            return 1
+        return 0

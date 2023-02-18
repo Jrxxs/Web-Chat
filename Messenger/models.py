@@ -30,6 +30,7 @@ class Private_Log(models.Model):
     To_User = models.ForeignKey(User, verbose_name="To User", related_name="To_User", on_delete=models.CASCADE)
     Message = models.TextField("Message", max_length=250)
     Date_Time = models.DateTimeField("Date_Time", auto_now_add=True)
+    Status = models.BooleanField("Read_Status", default="False")
 
     # def __str__(self):
     #     return self.Message

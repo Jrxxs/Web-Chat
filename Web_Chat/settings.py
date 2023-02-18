@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
-from modulefinder import LOAD_CONST
+# from modulefinder import LOAD_CONST
 import os.path
 from pathlib import Path
 
@@ -74,10 +74,10 @@ TEMPLATES = [
 WSGI_APPLICATION = 'Web_Chat.wsgi.application'
 ASGI_APPLICATION = 'Web_Chat.asgi.application'
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
         },
     },
 }

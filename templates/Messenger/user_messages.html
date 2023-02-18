@@ -56,7 +56,8 @@
 
 								{% for message in Log %}
 									{% if message.From_User_id == Client.id and message.To_User_id == Companion.id %}
-										<div class="chat-message-right pb-4">
+										<div class="chat-message-right pb-4" id="{{ message.id }}">
+											<div id="Status-{{ message.Status }}"></div>
 											<div>
 												<img src="{{ Client.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ Client.username }}" width="40" height="40">
 												<div class="text-muted small text-nowrap mt-2">{{ message.Date_Time }}</div>
@@ -68,7 +69,8 @@
 										</div>
 
 									{% elif message.From_User_id == Companion.id and message.To_User_id == Client.id %}
-										<div class="chat-message-left pb-4">
+										<div class="chat-message-left pb-4" id="{{ message.id }}">
+											<div id="Status-{{ message.Status }}"></div>
 											<div>
 												<img src="{{ Companion.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ Companion.username }}" width="40" height="40">
 												<div class="text-muted small text-nowrap mt-2">{{ message.Date_Time }}</div>
@@ -86,7 +88,7 @@
 							</div>
 						</div>
 
-						<div class="flex-grow-0 py-3 px-4 border-top">
+						<div class="flex-grow-0 py-3 px-4 border-top" id="input-group">
 							<div class="input-group">
 								<input type="text" class="form-control" id="message-input" placeholder="Type your message" name="Message">
 								<button class="btn btn-primary" id="send-button">Send</button>
@@ -104,6 +106,7 @@
 	const client = '{{ Client.username }}';
 	const HubName = 'testHub';
 	let roomName = '';
+	let Unreaded_Messages = [];
 
 
 	if (client < companion) {
@@ -128,14 +131,33 @@
             + '/'
         );
 
+	$(document).ready(function() {
+		let div = document.getElementById('chat-log');
+		let divs = div.children;
+		for (var i = 0; i < divs.length; i++) {
+			let status = divs[i].querySelector('#Status-False');
+			if (status != null) {
+				let className = divs[i].className;
+				if (className == 'chat-message-left pb-4' && status.id == 'Status-False') {
+					Unreaded_Messages.push(divs[i].id);
+				}
+			}
+		}
+	});
+
     chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
-        let message = data['message'];
-        let author = data['author'];
-        let date = data['date'];
-        if (author == companion) {
+        const message = data['message'];
+        const sender = data['sender'];
+        const date = data['date'];
+		const message_id = data['Message_Id'];
+        if (sender == companion) {
 			let msgListTag = document.createElement('div');
 			msgListTag.className = 'chat-message-left pb-4';
+			msgListTag.setAttribute("id", message_id);
+			let divStat = document.createElement('div');
+			divStat.setAttribute("id", "Status-False");
+			msgListTag.appendChild(divStat);
 			let div1 = document.createElement('div');
 			let ImgTag = document.createElement('img');
 			ImgTag.className = 'rounded-circle mr-1';
@@ -162,6 +184,10 @@
         } else {
         	let msgListTag = document.createElement('div');
 			msgListTag.className = 'chat-message-right pb-4';
+			msgListTag.setAttribute("id", message_id);
+			let divStat = document.createElement('div');
+			divStat.setAttribute("id", "Status-False");
+			msgListTag.appendChild(divStat);
 			let div1 = document.createElement('div');
 			let ImgTag = document.createElement('img');
 			ImgTag.src = '{{ Client.users.get_photo_url }}';
@@ -186,6 +212,7 @@
 			msgListTag.appendChild(div2);
 			document.querySelector('#chat-log').appendChild(msgListTag);
         }
+		Unreaded_Messages.push(message_id);
     };
 
     HubSocket.onmessage = function(e) {
@@ -194,13 +221,64 @@
 		if (message == 'init_connected_users_list') {
 			init_online_users(data['connected_users']);
 		} else if (message == 'new_connectoin') {
-			client_connected(data['author']);
+			client_connected(data['sender']);
 		} else if (message == 'disconnection') {
-			client_disconnected(data['author']);
+			client_disconnected(data['sender']);
 		} else if (message == 'new_message') {
-			appeared_new_message(data['author']);
+			appeared_new_message(data['sender']);
+		} else if (message == 'reading_successful') {
+			set_readed_status(data['id'], data['sender']);
 		}
     };
+
+	$(document.getElementById('chat-log')).scroll( function() {
+		for (var i = 0; i < Unreaded_Messages.length; i++) {
+			elem = "#"+`${Unreaded_Messages[i]}`
+			if (is_visible(elem)){
+				message_reading(Unreaded_Messages[i]);
+			}
+		}
+	})
+
+	function is_visible(elem) {
+		let Offset = document.getElementById('input-group').clientHeight;
+		let wt = $(window).scrollTop();
+		let wh = $(window).height() - Offset;
+		let et = $(elem).offset().top;
+		let eh = $(elem).outerHeight();
+		let dh = $(document).height();   
+		return (wt + wh >= et || wh + wt == dh || eh + et < wh);
+	}
+
+	function message_reading(id) {
+		HubSocket.send(JSON.stringify({
+				'command': 'read_message',
+				'sender': companion,
+				'receiver': client,
+				'id': id
+			}));
+	}
+
+	function set_readed_status(id, sender) {
+		Id = "#"+`${id}`;
+		elem = document.getElementById(id).querySelector('#Status-False');
+
+		user = document.querySelector('#' + sender);
+		if (user && elem != null && elem.id == 'Status-False' && Unreaded_Messages.includes(id)) {
+			value = user.children[0].textContent;
+			if (value != '' && value != '1') {
+				value = Number(value) - 1;
+			} else {
+				value = '';
+			}
+			user.children[0].textContent = `${value}`;
+			let index = Unreaded_Messages.indexOf(id);
+			if (index !== -1) {
+				Unreaded_Messages.splice(index, 1);
+			}
+			elem.id = 'Status-True';
+		}
+	}
 
 	function init_online_users(connected_users) {
 		for (let i = 0; i < connected_users.length; i++) {
@@ -227,8 +305,8 @@
 		}
 	};
 
-	function appeared_new_message(author) {
-		user = document.querySelector('#' + author);
+	function appeared_new_message(sender) {
+		user = document.querySelector('#' + sender);
 		if (user) {
 			value = user.children[0].textContent;
 			if (value == '') {
@@ -258,19 +336,19 @@
     document.querySelector('#send-button').onclick = function(e) {
     	const messageInputDom = document.querySelector('#message-input');
         const message = messageInputDom.value;
-        const date = new Date(Date.now()).toISOString().replace('T',' ').replace('Z','');
+        const date = new Date(Date.now()+(1000*60*(-(new Date()).getTimezoneOffset()))).toISOString().replace('T',' ').replace('Z','');
         if (message != '') {
 			chatSocket.send(JSON.stringify({
 				'message': message,
-				'author': client,
-				'destination': companion,
+				'sender': client,
+				'receiver': companion,
 				'date': date
 			}));
 
 			HubSocket.send(JSON.stringify({
 				'command': 'send_new_message',
-				'author': client,
-				'destination': companion,
+				'sender': client,
+				'receiver': companion,
 			}));
 
 			messageInputDom.value = '';

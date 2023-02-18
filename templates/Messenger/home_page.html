@@ -84,11 +84,11 @@
 		if (message == 'init_connected_users_list') {
 			init_online_users(data['connected_users']);
 		} else if (message == 'new_connectoin') {
-			client_connected(data['author']);
+			client_connected(data['sender']);
 		} else if (message == 'disconnection') {
-			client_disconnected(data['author']);
+			client_disconnected(data['sender']);
 		} else if (message == 'new_message') {
-			appeared_new_message(data['author']);
+			appeared_new_message(data['sender']);
 		} else if (message == 'finded') {
 			finded_users(data['users']);
 		}
@@ -119,8 +119,8 @@
 		}
 	};
 
-	function appeared_new_message(author) {
-		user = document.querySelector('#' + author);
+	function appeared_new_message(sender) {
+		user = document.querySelector('#' + sender);
 		if (user) {
 			value = user.children[0].textContent;
 			if (value == '') {

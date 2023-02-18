@@ -77,7 +77,11 @@ class HomePage(LoginRequiredMixin ,View):
             Logged_Client = User.objects.get(id=pk)
             # users = User.objects.filter(is_staff=False)
             Users = Logged_Client.users.Friends.all()
-            return render(request, "Messenger/home_page.html", {"Client": Logged_Client, 'UsErS': Users})
+            Users_with_unreaded_messages = {}
+            for user in Users:
+                amount = list(Private_Log.objects.filter(From_User=user.user, To_User=Logged_Client, Status=False).values_list('id', flat=True))
+                Users_with_unreaded_messages[user] = amount.__len__()
+            return render(request, "Messenger/home_page.html", {"Client": Logged_Client, 'UsErS': Users_with_unreaded_messages,})
 
 class UserMessages(LoginRequiredMixin, View):
     """ Сообщения пользователя """
@@ -85,9 +89,14 @@ class UserMessages(LoginRequiredMixin, View):
         if request.user.id == client_pk:
             Logged_Client = User.objects.get(id=client_pk)
             companion = User.objects.get(id=companion_pk)
-            Log = Private_Log.objects.filter(From_User__in=[Logged_Client, companion], To_User__in=[Logged_Client, companion])
+            Log = Private_Log.objects.filter(From_User__in=[Logged_Client, companion], To_User__in=[Logged_Client, companion]).order_by('Date_Time')
             Users = Logged_Client.users.Friends.all()
-            return render(request, "Messenger/user_messages.html", {"Client": Logged_Client, "Companion": companion, 'UsErS': Users, "Log": Log})
+            Users_with_unreaded_messages = {}
+            for user in Users:
+                amount = list(Private_Log.objects.filter(From_User=user.user, To_User=Logged_Client, Status=False).values_list('id', flat=True))
+                Users_with_unreaded_messages[user] = amount.__len__()
+            return render(request, "Messenger/user_messages.html", 
+                {"Client": Logged_Client, "Companion": companion, 'UsErS': Users_with_unreaded_messages, "Log": Log})
     
 def LogoutUser(reqest):
     logout(reqest)
