@@ -182,22 +182,15 @@ class Hub(AsyncWebsocketConsumer):
 
     async def find_persons(self, data):
 
-        users = await self.get_user(data['query'])
+        users = await self.get_user_list(data['query'])
 
-        if users != 0:
-
-            await self.send(text_data=json.dumps({
-                    'message': 'finded',
-                    'users': users
-                }))
-        
-        else:
-            
+        if users == 0:
             users = 'no_users'
-            await self.send(text_data=json.dumps({
-                    'message': 'finded',
-                    'users': users
-                }))
+        
+        await self.send(text_data=json.dumps({
+                'message': 'finded',
+                'users': users
+            }))
 
     async def refresh_conn_users(self, data):
 
@@ -235,10 +228,10 @@ class Hub(AsyncWebsocketConsumer):
             }))
 
     @sync_to_async
-    def get_user(self, username):
-        UserList = User.objects.filter(username__contains=username).values()
+    def get_user_list(self, username):
+        UserList = User.objects.filter(username__contains=username, is_superuser=False).values()
         if UserList:
-            return json.dumps([{'username': u['username'], 'Photo': User.objects.get(id=u['id']).users.get_photo_url(), \
+            return json.dumps([{'id': User.objects.get(id=u['id']).users.id, 'username': u['username'], 'Photo': User.objects.get(id=u['id']).users.get_photo_url(), \
                 'Status': 'Online' if u['username'] in connected_users else 'Offline'} for u in UserList])
         else:
             return 0

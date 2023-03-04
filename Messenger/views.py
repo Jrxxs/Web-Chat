@@ -1,7 +1,10 @@
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.views.generic.base import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import logout, login, authenticate
+from django.contrib.auth.decorators import login_required
+import re
 
 from .models import Users, Private_Log, User
 from .forms import LoginUserForm, RegistrationForm
@@ -97,33 +100,29 @@ class UserMessages(LoginRequiredMixin, View):
                 Users_with_unreaded_messages[user] = amount.__len__()
             return render(request, "Messenger/user_messages.html", 
                 {"Client": Logged_Client, "Companion": companion, 'UsErS': Users_with_unreaded_messages, "Log": Log})
-    
-def LogoutUser(reqest):
-    logout(reqest)
+
+class DeleteFriend(LoginRequiredMixin, View):
+
+    def get(self, request, client_pk, delete_pk):
+        if request.user.id == client_pk:
+            user = User.objects.get(id=client_pk).users
+            del_user = User.objects.get(id=delete_pk).users
+            user.Friends.remove(del_user)
+            ref_id = re.findall(r'to_user_id=(\d+)', request.META['HTTP_REFERER'])
+            if ref_id and int(ref_id[0]) == delete_pk:
+                print('xxxxxxx', delete_pk)
+                return redirect('home', client_pk)
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+def LogoutUser(request):
+    logout(request)
     return redirect("login")
 
-def redirect_view(reqest):
+def redirect_view(request):
     return redirect("login")
 
-# class SendMessage(View):
-#     """ Сообщения """
-#     def post(self, request, client_pk, companion_pk):
-#         form = MessageForm(request.POST)
-#         Client = User.objects.get(id=client_pk)
-#         Companion = User.objects.get(id=companion_pk)
-#         if form.is_valid():
-#             form = form.save(commit=False)
-#             form.From_User = Client
-#             form.To_User = Companion
-#             form.save()
-#         return redirect(reverse("user_messages", kwargs={"client_pk": Client.id, "companion_pk": Companion.id}))
-
-    #      SECOND WAY ----->  finding users by their pk's
-    # def post(self, request, client_pk, companion_pk):
-    #     form = MessageForm(request.POST)
-    #     if form.is_valid():
-    #         form = form.save(commit=False)
-    #         form.From_User_id = client_pk
-    #         form.To_User_id = companion_pk
-    #         form.save()
-    #     return redirect("/")
+@login_required
+def add_friend(request, uid):
+    user = User.objects.get(id=uid).users
+    user.Friends.add(request.GET['friend_id'])
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])

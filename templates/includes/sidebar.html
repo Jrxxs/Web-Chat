@@ -1,20 +1,28 @@
 {% for U, Unreaded in UsErS.items %}
-    <a href="{% url 'user_messages' Client.id U.user.id %}"  id="{{ U.user.username }}" class="list-group-item list-group-item-action border-0">
-        {% if Unreaded != 0 and Client.id != U.user.id %}
-            <div class="badge bg-success float-right">{{ Unreaded }}</div>
-        {% else %}
-            <div class="badge bg-success float-right"></div>
-        {% endif %}
-        <div class="d-flex align-items-start">
-            <img src="{{ U.user.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ U.user.username }}" width="40" height="40">
-            <div class="flex-grow-1 ml-3">
-                {% if Client.id != U.user.id %}
-                    {{ U.user.username }}
-                {% else %}
-                    To Self
-                {% endif %}
-                <div class="small"><span class="fas fa-circle chat-online"></span>Offline</div>
+    <div  id="top_{{ U.user.username }}" style="position: relative;">
+        <a href="{% url 'user_messages' Client.id U.user.id %}"  id="{{ U.user.username }}" class="list-group-item list-group-item-action border-0">
+            {% if Unreaded != 0 and Client.id != U.user.id %}
+                <div class="badge bg-success float-right" style="margin-top: 10px;">{{ Unreaded }}</div>
+            {% else %}
+                <div class="badge bg-success float-right" style="margin-top: 15px;"></div>
+            {% endif %}
+            <div class="d-flex align-items-start">
+                <img src="{{ U.user.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ U.user.username }}" width="40" height="40">
+                <div class="flex-grow-1 ml-3">
+                    {% if Client.id != U.user.id %}
+                        {{ U.user.username }}
+                    {% else %}
+                        To Self
+                    {% endif %}
+                    <div class="small"><span class="fas fa-circle chat-online"></span>Offline</div>
+                </div>
+            
             </div>
-        </div>
-    </a>
+        </a>
+        {% if Client.id != U.user.id %}
+            <button onclick="location.href='{% url 'delete_friend' Client.id U.user.id %}'" type="button" class="btn btn-light" style="height: 25px; width: 25px; position: absolute; top: 0; right: 0; z-index: 2; visibility: hidden;">
+                <span id="boot-icon" class="bi bi-x" style="position: absolute; top: 0; right: 15%;"></span>
+            </button>
+        {% endif %}
+    </div>
 {% endfor %}

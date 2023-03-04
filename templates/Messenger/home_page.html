@@ -59,8 +59,6 @@
 					</div>
 				</div>
 
-				{% endblock Client %}
-
 			</div>
 		</div>
 	</div>
@@ -69,6 +67,7 @@
 <script>
 	const HubName = 'testHub';
 	const AuthorizedUser = '{{ user.username }}';
+	let crosses = document.querySelector('#friendlist').children;
 
     const HubSocket = new WebSocket(
             'ws://'
@@ -136,7 +135,6 @@
 	let friendlist = document.querySelector('#friendlist').innerHTML;
 	$('#search-input').on("input", function() {
 		var query = this.value;
-		console.log(query);
 		if (query != '') {
 			get_users(query);
 		} else {
@@ -147,6 +145,13 @@
 		}
 	});
 
+	function get_users(query) {
+		HubSocket.send(JSON.stringify({
+				'command': 'find_persons',
+				'query': query
+			}));
+	};
+
 	function finded_users(data) {
 
 		document.querySelector('#friendlist').innerHTML = '';
@@ -156,6 +161,7 @@
 
 			for (let i = 0; i < users.length; i++) {
 				paint_users(users[i]);
+				console.log(users[i]);
 			}
 		} else {
 			document.querySelector('#friendlist').innerHTML += 'Ooops... We hasn`t users with this name!';
@@ -163,9 +169,24 @@
 	
 	};
 
+	$(document).ready(function () {
+		for (let i=0; i< crosses.length; i++) {
+			crosses[i].addEventListener('mouseenter', (e) => {
+				if (e.target.children[1]) {
+					e.target.children[1].style.visibility = 'visible';
+				}
+			})
+			crosses[i].addEventListener('mouseleave', (e) => {
+				if (e.target.children[1]) {
+					e.target.children[1].style.visibility = 'hidden';
+				}
+			})
+		}
+	});
+
 	function paint_users(user) {
 		let link = document.createElement('a');
-		link.href = '#';
+		link.href = "{% url 'add_new_friend' Client.id %}" + '?friend_id=' + user['id'].toString();
 		link.className = 'list-group-item list-group-item-action border-0';
 		link.id = user['username'];
 		let div1 = document.createElement('div');
@@ -199,13 +220,7 @@
     	console.error('Hub socket closed unexpectedly');
     };
 
-	function get_users(query) {
-		HubSocket.send(JSON.stringify({
-				'command': 'find_persons',
-				'query': query
-			}));
-	};
-
 </script>
 
+{% endblock Client %}
 {% endblock Content %}
