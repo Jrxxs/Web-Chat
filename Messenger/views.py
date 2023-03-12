@@ -15,7 +15,7 @@ class LoginPage(View):
 
     def get(self, request):
         if request.user.is_authenticated:
-            return redirect('user_id', request.user.id)
+            return redirect('home', request.user.id)
         users = User.objects.filter(is_staff=False)
         context = {
             'form': LoginUserForm
@@ -31,7 +31,7 @@ class LoginPage(View):
             user = authenticate(username=username, password=password)
             login(request, user)
             user_id = User.objects.get(username=username).id
-            return redirect('user_id', user_id)
+            return redirect('home', user_id)
         else:
             users = User.objects.filter(is_staff=False)
             context = {
@@ -45,7 +45,7 @@ class RegistrationPage(View):
 
     def get(self, request):
         if request.user.is_authenticated:
-            return redirect('user_id', request.user.id)
+            return redirect('home', request.user.id)
         users = User.objects.filter(is_staff=False)
         context = {
             'form': RegistrationForm
@@ -66,7 +66,7 @@ class RegistrationPage(View):
             user_id = User.objects.get(username=username).id
             u = Users(user=User.objects.get(username=username), Photo=photo)
             u.save()
-            return redirect('user_id', user_id)
+            return redirect('home', user_id)
         else:
             context = {
                 'form': form

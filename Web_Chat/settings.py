@@ -33,7 +33,7 @@ LOGOUT_REDIRECT_URL = "/"
 # Application definition
 
 INSTALLED_APPS = [
-    'channels',
+    'daphne',
     'Messenger',
     'django.contrib.admin',
     'django.contrib.auth',
