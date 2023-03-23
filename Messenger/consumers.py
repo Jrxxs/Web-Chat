@@ -1,6 +1,7 @@
 import json
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from datetime import datetime
 
 from .models import User, Private_Log
 
@@ -10,7 +11,6 @@ connected_users = []
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
-        # print(self.scope)
         self.room_group_name = 'room_%s' % self.room_name
 
         # Join room group
@@ -20,10 +20,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
-
-        # await self.send(text_data=json.dumps({
-        #     'message': message
-        # }))
 
     async def disconnect(self, close_code):
         # Leave room group
@@ -39,6 +35,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         client = data['sender']
         companion = data['receiver']
         date = data['date']
+
+        dt_obj = datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f")
+        date = str(dt_obj.day) + "/" + str(dt_obj.month) + "/" + str(dt_obj.year) + "\n" + str(dt_obj.hour) + ":" + str(dt_obj.minute)
 
         Client = await self.get_user(username=client)
         Companion = await self.get_user(username=companion)
