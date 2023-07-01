@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function paint_users(user) {
         let link = document.createElement('a');
-        link.href = "{% url 'add_new_friend' Client.id %}" + '?friend_id=' + user['id'].toString();
+        link.href = document.getElementById("add_friend").getAttribute("data-url") + "?friend_id=" + user['id'].toString() + "&prev=" + document.URL;
         link.className = 'list-group-item list-group-item-action border-0';
         link.id = user['username'];
         let div1 = document.createElement('div');

@@ -37,7 +37,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         date = data['date']
 
         dt_obj = datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f")
-        date = str(dt_obj.day) + "/" + str(dt_obj.month) + "/" + str(dt_obj.year) + "\n" + str(dt_obj.hour) + ":" + str(dt_obj.minute)
+        date = dt_obj.strftime("%d/%m/%y %H:%M")
 
         Client = await self.get_user(username=client)
         Companion = await self.get_user(username=companion)
@@ -46,7 +46,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Send message to room group
         await self.channel_layer.group_send(
-            self.room_group_name,
+            self.room_group_name,   
             {
                 'type': 'chat_message',
                 'message': message,

@@ -11,7 +11,7 @@
 <main class="content">
     <div class="container p-0">
 
-		<h1 class="h3 mb-3">{{ user.username }} chat</h1>
+		<h1 class="h3 mb-3">{{ user.username.value }} chat</h1>
 
 		<div class="card">
 			<div class="row g-0">
@@ -26,44 +26,26 @@
 						</div>
 					</div>
 
-					<div id="friendlist">
-						{% include "includes/sidebar.html" %}
-					</div>
+					{% include "includes/sidebar.html" %}
 
 					<hr class="d-block d-lg-none mt-1 mb-0">
 				</div>
 
 				{% block Companion %}
 					<div class="col-12 col-lg-7 col-xl-9">
-						<div class="py-2 px-4 border-bottom d-none d-lg-block">
-							<div class="d-flex align-items-center py-1">
-								<div class="position-relative">
-									<img src="{{ Companion.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ Companion.username }}" width="40" height="40">
-								</div>
-								<div class="flex-grow-1 pl-3">
-									<strong>{{ Companion.username }}</strong>
-								</div>
-								<div>
-									<a href="{% url 'logout' %}">
-										<button class="btn btn-primary btn-lg mr-1 px-3">
-											Log Out
-										</button>
-									</a>
-									<button class="btn btn-light border btn-lg px-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-horizontal feather-lg"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button>
-								</div>
-							</div>
-						</div>
+						
+						{% include "includes/header.html"%}
 
 						<div class="position-relative">
 							<div class="chat-messages p-4" id="chat-log">
 
-								{% for message in Log %}
-									{% if message.From_User_id == Client.id and message.To_User_id == Companion.id %}
+								{% for message in Log.data %}
+									{% if message.From_User == Client.id.value and message.To_User == Companion.id.value %}
 										<div class="chat-message-right pb-4" id="{{ message.id }}">
 											<div id="Status-{{ message.Status }}"></div>
 											<div>
-												<img src="{{ Client.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ Client.username }}" width="40" height="40">
-												<div class="text-muted small text-nowrap mt-2">{{ message.Date_Time | date:"d/m/y H:i" }}</div>
+												<img src="{{ Client.users.get_photo_url.value }}" class="rounded-circle mr-1" alt="{{ Client.username.value }}" width="40" height="40">
+												<div class="text-muted small text-nowrap mt-2">{{ message.Date_Time }}</div>
 											</div>
 											<div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
 												<div class="font-weight-bold mb-1">You</div>
@@ -71,15 +53,15 @@
 											</div>
 										</div>
 
-									{% elif message.From_User_id == Companion.id and message.To_User_id == Client.id %}
+									{% elif message.From_User == Companion.id.value and message.To_User == Client.id.value %}
 										<div class="chat-message-left pb-4" id="{{ message.id }}">
 											<div id="Status-{{ message.Status }}"></div>
 											<div>
-												<img src="{{ Companion.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ Companion.username }}" width="40" height="40">
-												<div class="text-muted small text-nowrap mt-2">{{ message.Date_Time | date:"d/m/y H:i" }}</div>
+												<img src="{{ Companion.users.get_photo_url.value }}" class="rounded-circle mr-1" alt="{{ Companion.username.value }}" width="40" height="40">
+												<div class="text-muted small text-nowrap mt-2">{{ message.Date_Time }}</div>
 											</div>
 											<div class="flex-shrink-1 bg-light rounded py-2 px-3 ml-3">
-												<div class="font-weight-bold mb-1">{{ Companion.username }}</div>
+												<div class="font-weight-bold mb-1">{{ Companion.username.value }}</div>
 												{{ message.Message }}
 											</div>
 										</div>
@@ -103,10 +85,12 @@
 		</div>
 	</div>
 
-	{{ Companion.username|json_script:"Companion_username" }}
-	{{ Client.username|json_script:"Client_username" }}
-	{{ Companion.users.get_photo_url|json_script:"Companion_photo_url" }}
-	{{ Client.users.get_photo_url|json_script:"Client_photo_url" }}
+	{{ Companion.username.value|json_script:"Companion_username" }}
+	{{ Client.username.value|json_script:"Client_username" }}
+	{{ Companion.users.get_photo_url.value|json_script:"Companion_photo_url" }}
+	{{ Client.users.get_photo_url.value|json_script:"Client_photo_url" }}
+
+	<div id="add_friend" data-url="{% url 'add_new_friend' Client.id.value %}"></div>
 
 </main>
 {% endblock Companion %}

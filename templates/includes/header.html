@@ -1,0 +1,33 @@
+<div class="py-2 px-4 border-bottom d-none d-lg-block">
+    <div class="d-flex align-items-center py-1">
+        <div class="position-relative">
+        {% if Conpanion %}
+            <img src="{{ Companion.users.get_photo_url.value }}" class="rounded-circle mr-1" alt="{{ Companion.username.value }}" width="40" height="40">
+        {% endif %}
+        </div>
+        <div class="flex-grow-1 pl-3">
+        {% if Conpanion %}
+            <strong>{{ Companion.username.value }}</strong>
+        {% endif %}
+        </div>
+        <div>
+            <a href="{% url 'logout' %}">
+                <button class="btn btn-primary btn-lg mr-1 px-3">
+                    Log Out
+                </button>
+            </a>
+            <div class="dropdown">
+                <button class="btn btn-light border btn-lg px-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-horizontal feather-lg">
+                        <circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle>
+                        <circle cx="5" cy="12" r="1"></circle>
+                    </svg>
+                </button>
+                <div class="dropdown-content">
+                    <a href="{% url 'home' Client.id.value %}">Home</a>
+                    <a href="{% url 'settings' Client.id.value %}">Settings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

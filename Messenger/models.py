@@ -30,13 +30,6 @@ class Private_Log(models.Model):
     Date_Time = models.DateTimeField("Date_Time", auto_now_add=True)
     Status = models.BooleanField("Read_Status", default="False")
 
-    # def __str__(self):
-    #     return self.Message
-    def last_20_messages(self):
-        x = Private_Log.objects.get(Read_Status=False)
-        print(x)
-        return Private_Log.objects.order_by('-Date_Time').all()[:20]
-
     class Meta:
         verbose_name = "Private Log"
         verbose_name_plural = "Private Logs"

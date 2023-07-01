@@ -26,41 +26,21 @@
 						</div>
 					</div>
 
-					<div id="friendlist">
-						{% include "includes/sidebar.html" %}
-					</div>
+					{% include "includes/sidebar.html" %}
 
 					<hr class="d-block d-lg-none mt-1 mb-0">
 				</div>
 
 				<div class="col-12 col-lg-7 col-xl-9">
-					<div class="py-2 px-4 border-bottom d-none d-lg-block">
-						<div class="d-flex align-items-center py-1">
-							<div class="position-relative">
-								{% comment %} <img src="{{ Companion.users.get_photo_url }}" class="rounded-circle mr-1" alt="{{ Companion.username }}" width="40" height="40"> {% endcomment %}
-							</div>
-							<div class="flex-grow-1 pl-3">
-								{% comment %} <strong>{{ Companion.username }}</strong> {% endcomment %}
-								{% comment %} <div class="text-muted small"><em>Typing...</em></div> {% endcomment %}
-							</div>
-							<div>
-								<a href="{% url 'logout' %}">
-									<button class="btn btn-primary btn-lg mr-1 px-3">
-										Log Out
-									</button>
-								</a>
-								<button class="btn btn-light border btn-lg px-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-horizontal feather-lg"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button>
-							</div>
+					
+					{% include "includes/header.html"%}
+
+					<div class="Home">
+						<div class="Welcome">
+							Welcome Home!
 						</div>
 					</div>
 
-
-					<div class="position-relative">
-						<div class="input-group">
-							<input type="text" class="form-control" id="login-input" placeholder="Type your Message">
-							<button class="btn btn-primary" id="send-button">Send</button>
-						</div>
-					</div>
 				</div>
 
 			</div>
@@ -68,6 +48,8 @@
 	</div>
 
 	{{ user.username|json_script:"Auth_username" }}
+
+	<div id="add_friend" data-url="{% url 'add_new_friend' Client.id.value %}"></div>
 
 </main>
 {% endblock Client %}

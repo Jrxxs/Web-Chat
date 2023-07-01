@@ -1,5 +1,41 @@
 
-body{margin-top:20px;}
+body{
+    margin-top:20px;
+    zoom: 80%;
+}
+
+/* контейнер <div> - необходим для размещения выпадающего содержимого */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Выпадающей контент (по умолчанию скрыт) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #ffffff;
+    min-width: 180px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+/* Ссылки внутри выпадающего списка */
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+/* Изменить цвет выпадающих ссылок при наведении */
+.dropdown-content a:hover {background-color: #f1f1f1}
+
+/* Показать выпадающее меню при наведении */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
 
 .chat-online {
     color: #34ce57
@@ -12,7 +48,9 @@ body{margin-top:20px;}
 .chat-messages {
     display: flex;
     flex-direction: column;
-    max-height: 800px;
+    height: 94vh;
+    min-height: 94vh;
+    max-height: 100vh;
     overflow-y: scroll
 }
 
@@ -43,4 +81,16 @@ body{margin-top:20px;}
 }
 .border-top {
     border-top: 1px solid #dee2e6!important;
+}
+
+#friendlist {
+    min-height: 80vh;
+}
+
+.Welcome {
+    min-height: 80vh;
+    max-height: 100vh;
+    font-size: 5rem;
+    text-align: center;
+    padding-top: 20%;
 }
