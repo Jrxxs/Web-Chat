@@ -14,6 +14,7 @@ import re
 
 from .models import Users, Private_Log, User
 from .forms import LoginUserForm, RegistrationForm
+from .permissions import IsRequestUser
 from . import Serializers
 
 
@@ -90,16 +91,16 @@ class HomePage(APIView):
     template_name = "Messenger/home_page.html"
 
     def get(self, request, pk):
-        if request.user.id == pk:
-            Logged_Client = get_object_or_404(User, pk=pk)
-            Client_serialiser = Serializers.UserSerializer(Logged_Client)
-            Users = Logged_Client.users.Friends.all()
-            Users_with_unreaded_messages = {}
-            for user in Users:
-                U_serialiser = Serializers.UsersSerializer(user)
-                amount = list(Private_Log.objects.filter(From_User=user.user, To_User=Logged_Client, Status=False).values_list('id', flat=True))
-                Users_with_unreaded_messages[U_serialiser] = amount.__len__()
-            return Response(data={"Client": Client_serialiser, 'UsErS': Users_with_unreaded_messages})
+        Logged_Client = get_object_or_404(User, pk=pk)
+        self.check_object_permissions(request, Logged_Client)
+        Client_serialiser = Serializers.UserSerializer(Logged_Client)
+        Users = Logged_Client.users.Friends.all()
+        Users_with_unreaded_messages = {}
+        for user in Users:
+            U_serialiser = Serializers.UsersSerializer(user)
+            amount = list(Private_Log.objects.filter(From_User=user.user, To_User=Logged_Client, Status=False).values_list('id', flat=True))
+            Users_with_unreaded_messages[U_serialiser] = amount.__len__()
+        return Response(data={"Client": Client_serialiser, 'UsErS': Users_with_unreaded_messages})
 
 class UserMessages(APIView):
     """ Сообщения пользователя """
@@ -109,74 +110,75 @@ class UserMessages(APIView):
     messages_to_load = 25
 
     def get(self, request, client_pk, companion_pk):
-        if request.user.id == client_pk:
-            Logged_Client = get_object_or_404(User, pk=client_pk)
-            Client_serialiser = Serializers.MessagesPageUserSerializer(Logged_Client)
-            companion = get_object_or_404(User, pk=companion_pk)
-            Companion_serialiser = Serializers.MessagesPageUserSerializer(companion)
-            Log = Private_Log.objects.filter(From_User__in=[Logged_Client, companion], To_User__in=[Logged_Client, companion])
+        Logged_Client = get_object_or_404(User, pk=client_pk)
+        self.check_object_permissions(request, Logged_Client)
+        Client_serialiser = Serializers.MessagesPageUserSerializer(Logged_Client)
+        companion = get_object_or_404(User, pk=companion_pk)
+        Companion_serialiser = Serializers.MessagesPageUserSerializer(companion)
+        Log = Private_Log.objects.filter(From_User__in=[Logged_Client, companion], To_User__in=[Logged_Client, companion])
 
-            if request.GET.get('type') == 'update':
-                New_messages = list(Log.filter(id__lt=int(request.GET.get('value'))).order_by('-id')[:self.messages_to_load])
-                UPD_log = Serializers.UpdateLogSerializer(New_messages, many=True)
-                return HttpResponse(JSONRenderer().render(UPD_log.data))
-            
-            unreaded_count = Log.filter(From_User=companion, To_User=Logged_Client, Status=False).__len__()
-            Log = Log.order_by('-id')[:unreaded_count+self.messages_to_load:-1]
-            logSerializer = Serializers.LogSerializer(Log, many=True)
-            Users = Logged_Client.users.Friends.all()
-            Users_with_unreaded_messages = {}
-            for user in Users:
-                U_serialiser = Serializers.UsersSerializer(user)
-                amount = list(Private_Log.objects.filter(From_User=user.user, To_User=Logged_Client, Status=False).values_list('id', flat=True))
-                Users_with_unreaded_messages[U_serialiser] = amount.__len__()
-            return Response(data={"Client": Client_serialiser, "Companion": Companion_serialiser, 'UsErS': Users_with_unreaded_messages, "Log": logSerializer})
+        if request.GET.get('type') == 'update':
+            New_messages = list(Log.filter(id__lt=int(request.GET.get('value'))).order_by('-id')[:self.messages_to_load])
+            UPD_log = Serializers.UpdateLogSerializer(New_messages, many=True)
+            return HttpResponse(JSONRenderer().render(UPD_log.data))
+        
+        unreaded_count = Log.filter(From_User=companion, To_User=Logged_Client, Status=False).__len__()
+        Log = Log.order_by('-id')[:unreaded_count+self.messages_to_load:-1]
+        logSerializer = Serializers.LogSerializer(Log, many=True)
+        Users = Logged_Client.users.Friends.all()
+        Users_with_unreaded_messages = {}
+        for user in Users:
+            U_serialiser = Serializers.UsersSerializer(user)
+            amount = list(Private_Log.objects.filter(From_User=user.user, To_User=Logged_Client, Status=False).values_list('id', flat=True))
+            Users_with_unreaded_messages[U_serialiser] = amount.__len__()
+        return Response(data={"Client": Client_serialiser, "Companion": Companion_serialiser, 'UsErS': Users_with_unreaded_messages, "Log": logSerializer})
 
 class SettingsPage(APIView):
     
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRequestUser]
     renderer_classes = [TemplateHTMLRenderer, HTMLFormRenderer]
     parser_classes = [MultiPartParser, FormParser]
     template_name = "Messenger/settings.html"
 
     def get(self, request, pk):
-        if request.user.id == pk:
-            Logged_Client = get_object_or_404(User, pk=pk)
-            serializer = Serializers.SettingSerializer(Logged_Client)
-            Client_serialiser = Serializers.MessagesPageUserSerializer(Logged_Client)
-            Users = Logged_Client.users.Friends.all()
-            Users_with_unreaded_messages = {}
-            for user in Users:
-                U_serialiser = Serializers.UsersSerializer(user)
-                amount = list(Private_Log.objects.filter(From_User=user.user, To_User=Logged_Client, Status=False).values_list('id', flat=True))
-                Users_with_unreaded_messages[U_serialiser] = amount.__len__()
-            return Response(data={"Client": Client_serialiser, 'UsErS': Users_with_unreaded_messages, 'serializer': serializer})
+        Logged_Client = get_object_or_404(User, pk=pk)
+        self.check_object_permissions(request, Logged_Client)
+        serializer = Serializers.SettingSerializer(Logged_Client)
+        Client_serialiser = Serializers.MessagesPageUserSerializer(Logged_Client)
+        Users = Logged_Client.users.Friends.all()
+        Users_with_unreaded_messages = {}
+        for user in Users:
+            U_serialiser = Serializers.UsersSerializer(user)
+            amount = list(Private_Log.objects.filter(From_User=user.user, To_User=Logged_Client, Status=False).values_list('id', flat=True))
+            Users_with_unreaded_messages[U_serialiser] = amount.__len__()
+        return Response(data={"Client": Client_serialiser, 'UsErS': Users_with_unreaded_messages, 'serializer': serializer})
         
     def post(self,request, pk):
-        if request.user.id == pk:
-            Logged_Client = get_object_or_404(User, pk=pk)
-            serializer = Serializers.SettingSerializer(Logged_Client, data=request.data)
-            serializer.is_valid()
-            serializer.save()
-            login(request, Logged_Client)
-            serializer = Serializers.SettingSerializer(Logged_Client) #??????????
-            Client_serialiser = Serializers.MessagesPageUserSerializer(Logged_Client)
-            Users = Logged_Client.users.Friends.all()
-            Users_with_unreaded_messages = {}
-            for user in Users:
-                U_serialiser = Serializers.UsersSerializer(user)
-                amount = list(Private_Log.objects.filter(From_User=user.user, To_User=Logged_Client, Status=False).values_list('id', flat=True))
-                Users_with_unreaded_messages[U_serialiser] = amount.__len__()
-            return Response(data={"Client": Client_serialiser, 'UsErS': Users_with_unreaded_messages, 'serializer': serializer})
+        Logged_Client = get_object_or_404(User, pk=pk)
+        self.check_object_permissions(request, Logged_Client)
+        serializer = Serializers.SettingSerializer(Logged_Client, data=request.data)
+        serializer.is_valid()
+        serializer.save()
+        login(request, Logged_Client)
+        serializer = Serializers.SettingSerializer(Logged_Client) #??????????
+        Client_serialiser = Serializers.MessagesPageUserSerializer(Logged_Client)
+        Users = Logged_Client.users.Friends.all()
+        Users_with_unreaded_messages = {}
+        for user in Users:
+            U_serialiser = Serializers.UsersSerializer(user)
+            amount = list(Private_Log.objects.filter(From_User=user.user, To_User=Logged_Client, Status=False).values_list('id', flat=True))
+            Users_with_unreaded_messages[U_serialiser] = amount.__len__()
+        return Response(data={"Client": Client_serialiser, 'UsErS': Users_with_unreaded_messages, 'serializer': serializer})
 
 class DeleteFriend(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRequestUser]
     serializer_class = Serializers.UsersSerializerAll
     queryset = Users.objects.all()
 
     def get(self, request, client_pk, delete_pk):
-        if request.user.id == client_pk and client_pk != delete_pk:
+        if client_pk != delete_pk:
             user = self.queryset.filter(user_id=client_pk)
+            self.check_object_permissions(request, user[0].user)
             del_user = self.queryset.filter(user_id=delete_pk)
             user[0].Friends.remove(del_user[0])
             
@@ -186,15 +188,16 @@ class DeleteFriend(APIView):
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 class DeleteAccount(RetrieveDestroyAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRequestUser]
     queryset = User.objects.all()
 
     def get(self, request, pk):
-        if request.user.id == pk:
-            instance = self.get_object()
-            self.perform_destroy(instance)
-            logout(request)
-            return redirect("login")
+        instance = self.get_object()
+        self.check_object_permissions(request, instance)
+        instance.users.Photo.delete()
+        self.perform_destroy(instance)
+        logout(request)
+        return redirect("login")
         
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
