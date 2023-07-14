@@ -13,8 +13,8 @@ django_asgi_app = get_asgi_application()
 import Messenger.routing
 
 application = ProtocolTypeRouter({
-  "http": django_asgi_app,
-  "websocket": AllowedHostsOriginValidator(
+    "http": django_asgi_app,
+    "websocket": AllowedHostsOriginValidator(
         AuthMiddlewareStack(
             URLRouter(
                 Messenger.routing.websocket_urlpatterns

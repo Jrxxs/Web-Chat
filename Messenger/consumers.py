@@ -5,8 +5,6 @@ from datetime import datetime
 
 from .models import User, Private_Log
 
-connected_users = []
-
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -83,11 +81,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 class Hub(AsyncWebsocketConsumer):
 
+    __connected_users = []
+
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'hub_%s' % self.room_name
 
-        connected_users.append(str(self.scope['user']))
+        self.__connected_users.append(str(self.scope['user']))
 
         # Join room group
         await self.channel_layer.group_add(
@@ -99,7 +99,7 @@ class Hub(AsyncWebsocketConsumer):
 
         await self.send(text_data=json.dumps({
             'message': 'init_connected_users_list',
-            'connected_users': connected_users,
+            'connected_users': self.__connected_users,
         }))
 
         await self.channel_layer.group_send(
@@ -124,7 +124,7 @@ class Hub(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         # Leave room group
-        connected_users.remove(str(self.scope['user']))
+        self.__connected_users.remove(str(self.scope['user']))
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -195,7 +195,7 @@ class Hub(AsyncWebsocketConsumer):
 
         await self.send(text_data=json.dumps({
             'message': 'init_connected_users_list',
-            'connected_users': connected_users,
+            'connected_users': self.__connected_users,
         }))
 
 
@@ -231,7 +231,7 @@ class Hub(AsyncWebsocketConsumer):
         UserList = User.objects.filter(username__contains=username, is_superuser=False).values()
         if UserList:
             return json.dumps([{'id': User.objects.get(id=u['id']).users.id, 'username': u['username'], 'Photo': User.objects.get(id=u['id']).users.get_photo_url(), \
-                'Status': 'Online' if u['username'] in connected_users else 'Offline'} for u in UserList])
+                'Status': 'Online' if u['username'] in self.__connected_users else 'Offline'} for u in UserList])
         else:
             return 0
     
