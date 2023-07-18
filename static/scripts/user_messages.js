@@ -30,30 +30,37 @@ document.addEventListener('DOMContentLoaded', function() {
         );
 
 	$(document).ready(function() {
-		let div = document.getElementById('chat-log');
-		let divs = div.children;
-		for (var i = 0; i < divs.length; i++) {
-			let status = divs[i].querySelector('#Status-False');
-			if (status != null) {
-				let className = divs[i].className;
-				if (className == 'chat-message-left pb-4' && status.id == 'Status-False') {
-					Unreaded_Messages.push(divs[i].id);
+		HubSocket.onopen = () => {
+			let div = document.getElementById('chat-log');
+			let divs = div.children;
+			for (var i = 0; i < divs.length; i++) {
+				let status = divs[i].querySelector('#Status-False');
+				if (status != null) {
+					let className = divs[i].className;
+					if (className == 'chat-message-left pb-4' && status.id == 'Status-False') {
+						elem = "#"+`${divs[i].id}`;
+						if (is_visible(div, elem)){
+							message_reading(divs[i].id);
+						}
+						else {
+							Unreaded_Messages.push(divs[i].id);
+						}
+					}
 				}
 			}
-		}
-		if (Unreaded_Messages.length > 0) {
-			document.getElementById(Unreaded_Messages[0]).scrollIntoView({block: "end", behavior: "auto"});
-		}
-		else {
-			if (div.lastChild.previousSibling) {
-				div.lastChild.previousSibling.scrollIntoView({block: "end", behavior: "auto"});
+			if (Unreaded_Messages.length > 0) {
+				document.getElementById(Unreaded_Messages[0]).scrollIntoView({block: "end", behavior: "auto"});
+			}
+			else {
+				if (div.lastChild.previousSibling) {
+					div.lastChild.previousSibling.scrollIntoView({block: "end", behavior: "auto"});
+				}
 			}
 		}
 	});
 
     chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
-		console.log(data);
         const message = data['message'];
         const sender = data['sender'];
         const date = data['date'];
@@ -88,6 +95,12 @@ document.addEventListener('DOMContentLoaded', function() {
 			msgListTag.appendChild(div1);
 			msgListTag.appendChild(div2);
 			document.querySelector('#chat-log').appendChild(msgListTag);
+			if (is_visible(document.getElementById('chat-log'), document.getElementById(message_id))) {
+				message_reading(message_id);
+			}
+			else {
+				Unreaded_Messages.push(message_id);
+			}
         } else {
         	let msgListTag = document.createElement('div');
 			msgListTag.className = 'chat-message-right pb-4';
@@ -121,7 +134,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 			document.getElementById(message_id).scrollIntoView({block: "end", behavior: "smooth"});
         }
-		Unreaded_Messages.push(message_id);
     };
 
     HubSocket.onmessage = function(e) {
@@ -158,9 +170,9 @@ document.addEventListener('DOMContentLoaded', function() {
 		let Offset = document.getElementById('input-group').clientHeight;
 		let wt = $(window).scrollTop();
 		let wh = $(window).height() - Offset;
-		let et = $(elem).offset().top;
+		let et = $(elem).offset().top-$(window).offset().top;
 		let eh = $(elem).outerHeight();
-		let dh = $(document).height();   
+		let dh = $(document).height();
 		return (wt + wh >= et || wh + wt == dh || eh + et < wh);
 	}
 
@@ -259,9 +271,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	function set_readed_status(id, sender) {
 		elem = document.getElementById(id).querySelector('#Status-False');
-
 		user = document.querySelector('#' + sender);
-		if (user && elem != null && elem.id == 'Status-False' && Unreaded_Messages.includes(id)) {
+		if (user && elem != null && elem.id == 'Status-False') {
 			value = user.children[0].textContent;
 			if (value != '' && value != '1') {
 				value = Number(value) - 1;
