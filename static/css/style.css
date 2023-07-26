@@ -87,9 +87,12 @@ body{
     min-height: 80vh;
 }
 
-.Welcome {
+.Reg-Welcome, .Welcome {
     min-height: 80vh;
     max-height: 100vh;
+}
+
+.Welcome {
     font-size: 5rem;
     text-align: center;
     padding-top: 20%;

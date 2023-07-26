@@ -20,5 +20,5 @@ urlpatterns = [
     path("user_id=<int:client_pk>/delete_id=<int:delete_pk>/", views.DeleteFriend.as_view(), name="delete_friend"),
     path("user_id=<int:pk>/add_friend", views.add_friend, name="add_new_friend"),
     path('api/', include(router.urls)),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

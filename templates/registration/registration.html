@@ -59,18 +59,16 @@
 							</div>
 						</div>
 
-						<div class="position-relative">
-							<div class="input-group">
-								<form action="{% url 'registration' %}" method="post" enctype="multipart/form-data">
-									{% csrf_token %}
-									<div class="form-error">{{ context.form.non_field_errors }}</div>
-									{% for f in context.form %}
-										<p><label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}: </label>{{ f }}</p>
-										<div class="form-error">{{ f.errors }}</div>
-									{% endfor %}
-									<button class="btn btn-primary" id="send-button">Apply</button>
-								</form>
-							</div>
+						<div class="Reg-Welcome">
+							<form action="{% url 'registration' %}" method="post" enctype="multipart/form-data">
+								{% csrf_token %}
+								<div class="form-error">{{ context.form.non_field_errors }}</div>
+								{% for f in context.form %}
+									<p><label class="form-label" for="{{ f.id_for_label }}" style="width: 130px; text-align: right; margin-right: 20px">{{ f.label }}: </label>{{ f }}</p>
+									<div class="form-error">{{ f.errors }}</div>
+								{% endfor %}
+								<button class="btn btn-primary" id="send-button">Apply</button>
+							</form>
 						</div>
 					</div>
 
