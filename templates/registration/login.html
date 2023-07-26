@@ -60,18 +60,16 @@
 							</div>
 						</div>
 
-						<div class="position-relative">
-							<div class="input-group">
-								<form action="{% url 'login' %}" method="post">
-									{% csrf_token %}
-									<div class="form-error">{{ context.form.non_field_errors }}</div>
-									{% for f in context.form %}
-										<p><label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}: </label>{{ f }}</p>
-										<div class="form-error">{{ f.errors }}</div>
-									{% endfor %}
-									<button class="btn btn-primary" id="send-button">Apply</button>
-								</form>
-							</div>
+						<div class="Reg-Welcome">
+							<form action="{% url 'login' %}" method="post">
+								{% csrf_token %}
+								<div class="form-error">{{ context.form.non_field_errors }}</div>
+								{% for f in context.form %}
+									<p><label class="form-label" for="{{ f.id_for_label }}" style="width: 70px; text-align: right; margin-right: 20px">{{ f.label }}: </label>{{ f }}</p>
+									<div class="form-error">{{ f.errors }}</div>
+								{% endfor %}
+								<button class="btn btn-primary" id="send-button">Apply</button>
+							</form>
 						</div>
 					</div>
 
@@ -82,19 +80,5 @@
 		</div>
 	</div>
 </main>
-
-<script>
-        document.querySelector('#login-input').focus();
-        document.querySelector('#login-input').onkeyup = function(e) {
-            if (e.keyCode === 13) {  // enter, return
-                document.querySelector('#send-button').click();
-            }
-        };
-
-        document.querySelector('#send-button').onclick = function(e) {
-            var Id = document.querySelector('#login-input').value;
-            window.location.pathname = 'user_id=' + Id + '/';
-        };
-</script>
 
 {% endblock Content %}
