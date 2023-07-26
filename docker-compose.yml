@@ -1,24 +1,41 @@
 version: 'latest'
 
 services:
+    nginx:
+        build: ./nginx
+        image: nginx
+        container_name: nginx
+        restart: unless-stopped
+        volumes:
+            - static:/app/static
+            - media:/app/media
+        ports:
+            - 80:80
+        depends_on:
+            - django
+
     redis:
         image: redis
         container_name: redis
         restart: unless-stopped
         ports:
             - 6379:6379
-        # volumes:
-        #     - ./storage/redis/data:/data
+        volumes:
+            - ./storage/redis/data:/data
 
     django:
         build: .
+        image: django
         container_name: django
         restart: unless-stopped
-        command: daphne -b 0.0.0.0 -p 8000 Web_Chat.asgi:application
+        command: daphne -b 0.0.0.0 -p 8001 Web_Chat.asgi:application
         volumes:
-            - .:/app
+            - static:/app/static
+            - media:/app/media
         ports:
-            - 8000:8000
+            - 8000:8001
+        expose:
+            - 8001
         depends_on:
             - pgdb
             - redis
@@ -31,7 +48,11 @@ services:
             - POSTGRES_USER=postgres
             - POSTGRES_PASSWORD=postgres
         container_name: pgdb
-        # volumes:
-        #     - ./storage/postgresdata:/var/lib/postgresql/data
+        volumes:
+            - ./storage/postgresdata:/var/lib/postgresql/data
         ports:
             - 5432:5432
+
+volumes:
+    static:
+    media:
